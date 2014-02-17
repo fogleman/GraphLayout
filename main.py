@@ -3,6 +3,14 @@ import graph
 import threading
 import wx
 
+BACKGROUND = (255, 255, 255)
+NODE_FILL = (255, 242, 193)
+NODE_COLOR = (7, 44, 54)
+EDGE_COLOR = (7, 44, 54)
+TEXT_COLOR = (7, 44, 54)
+NODE_WIDTH = 2
+EDGE_WIDTH = 2
+
 def render(model, size):
     padding = 0.5
     positions = model.nodes.values()
@@ -22,10 +30,11 @@ def render(model, size):
     font.SetFaceName('Helvetica')
     font.SetPointSize(int(scale / 8))
     dc.SetFont(font)
-    dc.SetBackground(wx.WHITE_BRUSH)
+    dc.SetTextForeground(wx.Colour(*TEXT_COLOR))
+    dc.SetBackground(wx.Brush(wx.Colour(*BACKGROUND)))
     dc.Clear()
-    dc.SetBrush(wx.BLACK_BRUSH)
-    dc.SetPen(wx.BLACK_PEN)
+    dc.SetBrush(wx.Brush(wx.Colour(*EDGE_COLOR)))
+    dc.SetPen(wx.Pen(wx.Colour(*EDGE_COLOR), EDGE_WIDTH))
     for a, b in model.edges:
         ax, ay = model.nodes[a]
         bx, by = model.nodes[b]
@@ -40,8 +49,8 @@ def render(model, size):
         points = [(bx, by), (cx1, cy1), (cx2, cy2), (bx, by)]
         points = [(sx(x), sy(y)) for x, y in points]
         dc.DrawPolygon(points)
-    dc.SetBrush(wx.Brush(wx.Colour(221, 221, 221)))
-    dc.SetPen(wx.Pen(wx.BLACK, 2))
+    dc.SetBrush(wx.Brush(wx.Colour(*NODE_FILL)))
+    dc.SetPen(wx.Pen(wx.Colour(*NODE_COLOR), NODE_WIDTH))
     for key, (x, y) in model.nodes.items():
         x, y = sx(x), sy(y)
         dc.DrawCircle(x, y, int(scale / 4))
@@ -77,7 +86,7 @@ class Panel(wx.Panel):
         self.update()
     def on_paint(self, event):
         dc = wx.AutoBufferedPaintDC(self)
-        dc.SetBackground(wx.WHITE_BRUSH)
+        dc.SetBackground(wx.Brush(wx.Colour(*BACKGROUND)))
         dc.Clear()
         if self.bitmap is None:
             return
