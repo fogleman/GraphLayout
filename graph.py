@@ -105,7 +105,7 @@ class Model(object):
         key, value = undo_data
         self.nodes[key] = value
 
-def layout(edges, steps=100000):
+def layout(edges, steps=100000, listener=None):
     def energy(state):
         return state.energy()
     def do_move(state):
@@ -116,9 +116,6 @@ def layout(edges, steps=100000):
         result = Model(state.edges)
         result.nodes = dict(state.nodes)
         return result
-    def listener(state, energy):
-        state.energy(True) # prints debug output
-        print
     state = Model(edges)
     annealer = anneal.Annealer(energy, do_move, undo_move, make_copy, listener)
     state, energy = annealer.anneal(state, 100, 0.1, steps)
