@@ -30,8 +30,8 @@ def segments_intersect(x0, y0, x1, y1, x2, y2, x3, y3):
     det = float(-p2 * q1 + p1 * q2)
     if det == 0:
         return False
-    s = (-q1 * (x0 - x2) + p1 * (y0 - y2)) / det
-    t = ( p2 * (y0 - y2) - q2 * (x0 - x2)) / det
+    s = (p1 * (y0 - y2) - q1 * (x0 - x2)) / det
+    t = (p2 * (y0 - y2) - q2 * (x0 - x2)) / det
     return s > 0 and s < 1 and t > 0 and t < 1
 
 class Model(object):
@@ -78,7 +78,7 @@ class Model(object):
         result += intersecting_nodes * 100
         result += nodes_on_edges * 100
         result += intersecting_edges * 50
-        result += non_orthogonal_edges * 10
+        #result += non_orthogonal_edges * 10
         result += total_edge_length
         # debug output
         if debug:
@@ -91,8 +91,13 @@ class Model(object):
         return result
     def do_move(self):
         key = random.choice(self.nodes.keys())
-        x = random.randint(0, 5)
-        y = random.randint(0, 5)
+        if random.randint(0, 1):
+            x, y = self.nodes[key]
+            x += random.randint(-1, 1)
+            y += random.randint(-1, 1)
+        else:
+            x = random.randint(0, 5)
+            y = random.randint(0, 5)
         result = (key, self.nodes[key])
         self.nodes[key] = (x, y)
         return result
