@@ -4,7 +4,7 @@ import wx
 
 def render(model, size):
     app = wx.App(None)
-    padding = 1
+    padding = 0.5
     positions = model.nodes.values()
     x1 = min(x for x, y in positions) - padding
     y1 = min(y for x, y in positions) - padding
@@ -19,7 +19,7 @@ def render(model, size):
     bitmap = wx.EmptyBitmap(width, height)
     dc = wx.MemoryDC(bitmap)
     font = dc.GetFont()
-    font.SetPointSize(14)
+    font.SetPointSize(int(scale / 8))
     dc.SetFont(font)
     dc.SetBackground(wx.WHITE_BRUSH)
     dc.Clear()
@@ -70,11 +70,58 @@ def main():
         (4, 5),
         (4, 6),
     ]
-    edges3 = [(0, 1), (0, 2), (0, 3), (0, 4), (1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4)]
-    edges4 = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)]
-    edges5 = [(0, 1), (1, 2), (2, 0)]
-    edges6 = [(1, 2), (1, 5), (1, 8), (5, 6), (2, 3), (3, 4), (4, 2), (6, 7), (6, 8), (6, 3)]
-    model = graph.layout(edges6)
+    edges3 = [
+        (0, 1),
+        (0, 2),
+        (0, 3),
+        (0, 4),
+        (1, 2),
+        (1, 3),
+        (1, 4),
+        (2, 3),
+        (2, 4),
+        (3, 4),
+    ]
+    edges4 = [
+        (0, 1),
+        (0, 2),
+        (0, 3),
+        (1, 2),
+        (1, 3),
+        (2, 3),
+    ]
+    edges5 = [
+        (0, 1),
+        (1, 2),
+        (2, 0),
+    ]
+    edges6 = [
+        (1, 2),
+        (1, 5),
+        (1, 8),
+        (5, 6),
+        (2, 3),
+        (3, 4),
+        (4, 2),
+        (6, 7),
+        (6, 8),
+        (6, 3),
+    ]
+    edges7 = [
+        (1, 2),
+        (1, 3),
+        (1, 4),
+        (2, 4),
+        (2, 5),
+        (3, 6),
+        (4, 3),
+        (4, 6),
+        (4, 7),
+        (5, 4),
+        (5, 7),
+        (7, 6),
+    ]
+    model = graph.layout(edges7)
     bitmap = render(model, 800)
     bitmap.SaveFile('output.png', wx.BITMAP_TYPE_PNG)
 

@@ -77,7 +77,7 @@ class Model(object):
         result = 0
         result += intersecting_nodes * 100
         result += nodes_on_edges * 100
-        result += intersecting_edges * 50
+        #result += intersecting_edges * 50
         #result += non_orthogonal_edges * 10
         result += total_edge_length
         # debug output
@@ -105,7 +105,7 @@ class Model(object):
         key, value = undo_data
         self.nodes[key] = value
 
-def layout(edges):
+def layout(edges, steps=100000):
     def energy(state):
         return state.energy()
     def do_move(state):
@@ -121,5 +121,5 @@ def layout(edges):
         print
     state = Model(edges)
     annealer = anneal.Annealer(energy, do_move, undo_move, make_copy, listener)
-    state, energy = annealer.anneal(state, 100, 0.1, 100000)
+    state, energy = annealer.anneal(state, 100, 0.1, steps)
     return state
