@@ -3,47 +3,36 @@ from math import hypot
 import anneal
 import random
 
-SEPARATE = 0
-INTERSECT = 1
-OVERLAP = 2
-
-def project(x0, y0, x1, y1, x2, y2):
+def point_on_segment(x0, y0, x1, y1, x2, y2):
     xt = None
     yt = None
     if x0 != x1:
         xt = float(x2 - x0) / (x1 - x0)
     elif x2 != x0:
-        return None
+        return False
     if y0 != y1:
         yt = float(y2 - y0) / (y1 - y0)
     elif y2 != y0:
-        return None
+        return False
     if xt is None:
-        return yt
-    if yt is None:
-        return xt
-    if xt == yt:
-        return xt
-    return None
+        t = yt
+    elif yt is None:
+        t = xt
+    elif xt == yt:
+        t = xt
+    else:
+        return False
+    return t > 0 and t < 1
 
 def segments_intersect(x0, y0, x1, y1, x2, y2, x3, y3):
     p1, q1 = x1 - x0, y1 - y0
     p2, q2 = x3 - x2, y3 - y2
     det = float(-p2 * q1 + p1 * q2)
     if det == 0:
-        a = project(x0, y0, x1, y1, x2, y2)
-        b = project(x0, y0, x1, y1, x3, y3)
-        c = project(x2, y2, x3, y3, x0, y0)
-        d = project(x2, y2, x3, y3, x1, y1)
-        for x in [a, b, c, d]:
-            if x > 0 and x < 1:
-                return OVERLAP
-        return SEPARATE
+        return False
     s = (-q1 * (x0 - x2) + p1 * (y0 - y2)) / det
     t = ( p2 * (y0 - y2) - q2 * (x0 - x2)) / det
-    if s > 0 and s < 1 and t > 0 and t < 1:
-        return INTERSECT
-    return SEPARATE
+    return s > 0 and s < 1 and t > 0 and t < 1
 
 class Model(object):
     def __init__(self, edges):
@@ -59,17 +48,21 @@ class Model(object):
         for (x1, y1), (x2, y2) in combinations(self.nodes.values(), 2):
             if hypot(x2 - x1, y2 - y1) < 1:
                 intersecting_nodes += 1
+        # count nodes on edges
+        nodes_on_edges = 0
+        for a, b in self.edges:
+            a, b = [self.nodes[x] for x in [a, b]]
+            (x1, y1), (x2, y2) = a, b
+            for x, y in self.nodes.values():
+                if point_on_segment(x1, y1, x2, y2, x, y):
+                    nodes_on_edges += 1
         # count intersecting edges
         intersecting_edges = 0
-        overlapping_edges = 0
         for (s1, t1), (s2, t2) in combinations(self.edges, 2):
             s1, t1, s2, t2 = [self.nodes[x] for x in [s1, t1, s2, t2]]
             (x0, y0), (x1, y1), (x2, y2), (x3, y3) = s1, t1, s2, t2
-            result = segments_intersect(x0, y0, x1, y1, x2, y2, x3, y3)
-            if result == INTERSECT:
+            if segments_intersect(x0, y0, x1, y1, x2, y2, x3, y3):
                 intersecting_edges += 1
-            if result == OVERLAP:
-                overlapping_edges += 1
         # check edge lengths and orthogonality
         total_edge_length = 0
         non_orthogonal_edges = len(self.edges)
@@ -83,14 +76,14 @@ class Model(object):
         # debug output
         if debug:
             print 'intersecting_nodes:', intersecting_nodes
-            print 'overlapping_edges:', overlapping_edges
+            print 'nodes_on_edges:', nodes_on_edges
             print 'intersecting_edges:', intersecting_edges
             print 'non_orthogonal_edges:', non_orthogonal_edges
             print 'total_edge_length:', total_edge_length    
         # compute score
         result = 0
         result += intersecting_nodes * 100
-        result += overlapping_edges * 100
+        result += nodes_on_edges * 100
         result += intersecting_edges * 50
         result += non_orthogonal_edges * 10
         result += total_edge_length

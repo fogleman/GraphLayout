@@ -35,7 +35,7 @@ def render(model, size):
     return bitmap
 
 def main():
-    edges = [
+    edges1 = [
         (5, 11),
         (11, 10),
         (11, 2),
@@ -46,7 +46,16 @@ def main():
         (7, 8),
         (7, 11),
     ]
-    model = graph.layout(edges)
+    edges2 = [
+        (1, 2),
+        (1, 5),
+        (2, 5),
+        (2, 3),
+        (3, 4),
+        (4, 5),
+        (4, 6),
+    ]
+    model = graph.layout(edges1)
     model.energy(True) # prints debug output
     bitmap = render(model, 800)
     bitmap.SaveFile('output.png', wx.BITMAP_TYPE_PNG)
