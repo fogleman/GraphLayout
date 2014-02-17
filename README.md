@@ -20,4 +20,4 @@ Graph drawing using simulated annealing for layout.
 
 ### Output
 
-![Screenshot](http://i.imgur.com/r8SzRoH.png)
+![Screenshot](http://i.imgur.com/ZO6BUK7.png)
