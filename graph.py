@@ -73,13 +73,6 @@ class Model(object):
             total_edge_length += length
             if x1 == x2 or y1 == y2:
                 non_orthogonal_edges -= 1
-        # debug output
-        if debug:
-            print 'intersecting_nodes:', intersecting_nodes
-            print 'nodes_on_edges:', nodes_on_edges
-            print 'intersecting_edges:', intersecting_edges
-            print 'non_orthogonal_edges:', non_orthogonal_edges
-            print 'total_edge_length:', total_edge_length    
         # compute score
         result = 0
         result += intersecting_nodes * 100
@@ -87,11 +80,19 @@ class Model(object):
         result += intersecting_edges * 50
         result += non_orthogonal_edges * 10
         result += total_edge_length
+        # debug output
+        if debug:
+            print 'intersecting_nodes:', intersecting_nodes
+            print 'nodes_on_edges:', nodes_on_edges
+            print 'intersecting_edges:', intersecting_edges
+            print 'non_orthogonal_edges:', non_orthogonal_edges
+            print 'total_edge_length:', total_edge_length
+            print 'energy:', result
         return result
     def do_move(self):
         key = random.choice(self.nodes.keys())
-        x = random.randint(0, 9)
-        y = random.randint(0, 9)
+        x = random.randint(0, 5)
+        y = random.randint(0, 5)
         result = (key, self.nodes[key])
         self.nodes[key] = (x, y)
         return result
@@ -111,8 +112,9 @@ def layout(edges):
         result.nodes = dict(state.nodes)
         return result
     def listener(state, energy):
-        print energy
+        state.energy(True) # prints debug output
+        print
     state = Model(edges)
     annealer = anneal.Annealer(energy, do_move, undo_move, make_copy, listener)
-    state, energy = annealer.anneal(state, 100, 1, 100000)
+    state, energy = annealer.anneal(state, 100, 0.1, 100000)
     return state

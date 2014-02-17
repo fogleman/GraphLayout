@@ -3,14 +3,18 @@ import wx
 
 def render(model, size):
     app = wx.App(None)
-    x1 = min(x for x, y in model.nodes.values())
-    y1 = min(y for x, y in model.nodes.values())
-    x2 = max(x for x, y in model.nodes.values())
-    y2 = max(y for x, y in model.nodes.values())
-    x1, y1 = x1 - 1, y1 - 1
-    x2, y2 = x2 + 1, y2 + 1
+    padding = 1
+    positions = model.nodes.values()
+    x1 = min(x for x, y in positions) - padding
+    y1 = min(y for x, y in positions) - padding
+    x2 = max(x for x, y in positions) + padding
+    y2 = max(y for x, y in positions) + padding
     scale = min(float(size) / (x2 - x1), float(size) / (y2 - y1))
-    width, height = int((x2 - x1) * scale), int((y2 - y1) * scale)
+    def sx(x):
+        return int(round((x - x1) * scale))
+    def sy(y):
+        return int(round((y - y1) * scale))
+    width, height = sx(x2), sy(y2)
     bitmap = wx.EmptyBitmap(width, height)
     dc = wx.MemoryDC(bitmap)
     dc.SetBackground(wx.WHITE_BRUSH)
@@ -19,15 +23,10 @@ def render(model, size):
     dc.SetPen(wx.BLACK_PEN)
     for a, b in model.edges:
         ax, ay = model.nodes[a]
-        ax = int((ax - x1) * scale)
-        ay = int((ay - y1) * scale)
         bx, by = model.nodes[b]
-        bx = int((bx - x1) * scale)
-        by = int((by - y1) * scale)
-        dc.DrawLine(ax, ay, bx, by)
+        dc.DrawLine(sx(ax), sy(ay), sx(bx), sy(by))
     for key, (x, y) in model.nodes.items():
-        x = int((x - x1) * scale)
-        y = int((y - y1) * scale)
+        x, y = sx(x), sy(y)
         dc.DrawCircle(x, y, int(scale / 4))
         text = str(key)
         tw, th = dc.GetTextExtent(text)
@@ -56,7 +55,6 @@ def main():
         (4, 6),
     ]
     model = graph.layout(edges1)
-    model.energy(True) # prints debug output
     bitmap = render(model, 800)
     bitmap.SaveFile('output.png', wx.BITMAP_TYPE_PNG)
 
