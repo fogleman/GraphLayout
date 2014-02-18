@@ -5,6 +5,15 @@ dll = CDLL('_layout.so')
 MAX_EDGES = 128
 MAX_NODES = 128
 
+WEIGHTS = {
+    'node_node': 100,
+    'node_edge': 100,
+    'edge_edge': 10,
+    'rank': 5,
+    'length': 1,
+    'area': 1,
+}
+
 class Node(Structure):
     _fields_ = [
         ('rank', c_int),
@@ -108,7 +117,7 @@ def create_model(edges):
         model.edges[index].b = lookup[b]
     return model, lookup
 
-def create_weights(data):
+def create_attrib(data):
     keys = [
         'node_node',
         'node_edge',
@@ -119,19 +128,12 @@ def create_weights(data):
     ]
     result = Attrib()
     for key in keys:
-        setattr(result, key, data.get(key, 0))
+        setattr(result, key, data.get(key, WEIGHTS[key]))
     return result
 
-def layout(edges, steps=100000, listener=None):
+def layout(edges, weights=None, steps=100000, listener=None):
     model, lookup = create_model(edges)
-    weights = create_weights({
-        'node_node': 100,
-        'node_edge': 100,
-        'edge_edge': 10,
-        'rank': 5,
-        'length': 1,
-        'area': 1,
-    })
+    weights = create_attrib(weights or {})
     def create_result(model):
         nodes = {}
         for key, index in lookup.items():

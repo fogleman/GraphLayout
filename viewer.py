@@ -15,21 +15,24 @@ TESTS = [
     [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8), (8, 9)],
 ]
 
-class Panel(wx.Panel):
+class View(wx.Panel):
     def __init__(self, parent):
-        super(Panel, self).__init__(parent)
+        super(View, self).__init__(parent)
         self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.Bind(wx.EVT_CHAR_HOOK, self.on_char)
         self.index = -1
+        self.weights = {}
         self.model = None
         self.bitmap = None
         wx.CallAfter(self.next)
     def next(self):
         self.index = (self.index + 1) % len(TESTS)
+        self.compute()
+    def compute(self):
         edges = TESTS[self.index]
-        nodes = layout.layout(edges)
+        nodes = layout.layout(edges, self.weights)
         self.set_model((edges, nodes))
     def update(self):
         if self.model is None:
@@ -40,6 +43,9 @@ class Panel(wx.Panel):
     def set_model(self, model):
         self.model = model
         self.update()
+    def set_weights(self, weights):
+        self.weights = weights
+        self.compute()
     def set_bitmap(self, bitmap):
         self.bitmap = bitmap
         self.Refresh()
@@ -66,13 +72,52 @@ class Panel(wx.Panel):
         dc.DrawBitmap(self.bitmap, x, y)
         dc.DrawText(str(self.index), 10, 10)
 
+class Frame(wx.Frame):
+    def __init__(self):
+        super(Frame, self).__init__(None)
+        self.create_controls(self)
+        self.SetTitle('GraphLayout')
+        self.SetClientSize((800, 600))
+        self.Center()
+    def create_controls(self, parent):
+        panel = wx.Panel(parent)
+        self.view = self.create_view(panel)
+        sidebar = self.create_sidebar(panel)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.Add(self.view, 1, wx.EXPAND)
+        sizer.Add(sidebar, 0, wx.EXPAND | wx.ALL, 10)
+        panel.SetSizer(sizer)
+        return panel
+    def create_view(self, parent):
+        return View(parent)
+    def create_sidebar(self, parent):
+        names = [
+            'edge_edge',
+            'rank',
+            'length',
+            'area',
+        ]
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sliders = []
+        for name in names:
+            text = wx.StaticText(parent, -1, name)
+            slider = wx.Slider(parent, -1, 0, 0, 100)
+            slider.name = name
+            slider.Bind(wx.EVT_SCROLL_THUMBRELEASE, self.on_slider)
+            self.sliders.append(slider)
+            sizer.Add(text)
+            sizer.Add(slider, 0, wx.EXPAND)
+            sizer.AddSpacer(10)
+        return sizer
+    def on_slider(self, event):
+        weights = {}
+        for slider in self.sliders:
+            weights[slider.name] = slider.GetValue() / 10.0
+        self.view.set_weights(weights)
+
 def main():
     app = wx.App(None)
-    frame = wx.Frame(None)
-    panel = Panel(frame)
-    frame.SetTitle('GraphLayout')
-    frame.SetClientSize((600, 600))
-    frame.Center()
+    frame = Frame()
     frame.Show()
     app.MainLoop()
 
