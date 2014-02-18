@@ -114,7 +114,7 @@ float energy(Model *model) {
         }
     }
     // check node ranks
-    int out_of_order_nodes = 0;
+    int out_of_rank_nodes = 0;
     for (int i = 0; i < model->node_count; i++) {
         Node *a = &model->nodes[i];
         if (a->rank == 0) {
@@ -123,10 +123,10 @@ float energy(Model *model) {
         for (int j = i + 1; j < model->node_count; j++) {
             Node *b = &model->nodes[j];
             if (a->rank >= b->rank && a->y < b->y) {
-                out_of_order_nodes++;
+                out_of_rank_nodes++;
             }
             if (a->rank <= b->rank && a->y > b->y) {
-                out_of_order_nodes++;
+                out_of_rank_nodes++;
             }
         }
     }
@@ -187,7 +187,7 @@ float energy(Model *model) {
     result += intersecting_nodes * 100;
     result += nodes_on_edges * 100;
     result += intersecting_edges * 10;
-    result += out_of_order_nodes * 10;
+    result += out_of_rank_nodes * 10;
     result += total_edge_length;
     result += area * 0.1;
     return result;

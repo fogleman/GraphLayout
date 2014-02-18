@@ -81,7 +81,7 @@ def create_model(edges):
         outputs[a].add(b)
     topo = topographical_sort(nodes, inputs)
     ranks = dict((node, rank) for rank, node in topo)
-    lookup = dict((x, i) for i, x in enumerate(nodes))
+    lookup = dict((node, index) for index, node in enumerate(nodes))
     model = Model()
     model.edge_count = len(edges)
     model.node_count = len(nodes)
@@ -104,7 +104,7 @@ def layout(edges, steps=100000, listener=None):
         return nodes
     def callback_func(model, energy):
         if listener is not None:
-            graph = create_result(model.contents)
-            listener(graph, energy)
+            result = create_result(model.contents)
+            listener(result, energy)
     anneal(model, 100, 0.1, steps, callback_func)
     return create_result(model)
