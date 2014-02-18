@@ -37,11 +37,11 @@ typedef struct {
 } Undo;
 
 typedef struct {
-    int intersecting_nodes;
-    int nodes_on_edges;
-    int intersecting_edges;
-    int out_of_rank_nodes;
-    float total_edge_length;
+    float node_node;
+    float node_edge;
+    float edge_edge;
+    float rank;
+    float length;
     float area;
 } Attrib;
 
@@ -105,35 +105,18 @@ int segments_intersect(
 
 void analyze(Model *model, Attrib* attrib) {
     // count intersecting nodes
-    int intersecting_nodes = 0;
+    int node_node = 0;
     for (int i = 0; i < model->node_count; i++) {
         for (int j = i + 1; j < model->node_count; j++) {
             Node *a = &model->nodes[i];
             Node *b = &model->nodes[j];
             if (distance(a->x, a->y, b->x, b->y) < 1) {
-                intersecting_nodes++;
-            }
-        }
-    }
-    // check node ranks
-    int out_of_rank_nodes = 0;
-    for (int i = 0; i < model->node_count; i++) {
-        Node *a = &model->nodes[i];
-        if (a->rank == 0) {
-            continue;
-        }
-        for (int j = i + 1; j < model->node_count; j++) {
-            Node *b = &model->nodes[j];
-            if (a->rank >= b->rank && a->y < b->y) {
-                out_of_rank_nodes++;
-            }
-            if (a->rank <= b->rank && a->y > b->y) {
-                out_of_rank_nodes++;
+                node_node++;
             }
         }
     }
     // count nodes on edges
-    int nodes_on_edges = 0;
+    int node_edge = 0;
     for (int i = 0; i < model->edge_count; i++) {
         Edge *edge = &model->edges[i];
         Node *a = &model->nodes[edge->a];
@@ -146,12 +129,12 @@ void analyze(Model *model, Attrib* attrib) {
             if (segment_point_distance(
                 a->x, a->y, b->x, b->y, c->x, c->y) < 0.25)
             {
-                nodes_on_edges++;
+                node_edge++;
             }
         }
     }
     // count intersecting edges
-    int intersecting_edges = 0;
+    int edge_edge = 0;
     for (int i = 0; i < model->edge_count; i++) {
         for (int j = i + 1; j < model->edge_count; j++) {
             Edge *p = &model->edges[i];
@@ -163,17 +146,34 @@ void analyze(Model *model, Attrib* attrib) {
             if (segments_intersect(
                 a->x, a->y, b->x, b->y, c->x, c->y, d->x, d->y))
             {
-                intersecting_edges++;
+                edge_edge++;
+            }
+        }
+    }
+    // check node ranks
+    int rank = 0;
+    for (int i = 0; i < model->node_count; i++) {
+        Node *a = &model->nodes[i];
+        if (a->rank == 0) {
+            continue;
+        }
+        for (int j = i + 1; j < model->node_count; j++) {
+            Node *b = &model->nodes[j];
+            if (a->rank >= b->rank && a->y < b->y) {
+                rank++;
+            }
+            if (a->rank <= b->rank && a->y > b->y) {
+                rank++;
             }
         }
     }
     // sum edge lengths
-    float total_edge_length = 0;
+    float length = 0;
     for (int i = 0; i < model->edge_count; i++) {
         Edge *edge = &model->edges[i];
         Node *a = &model->nodes[edge->a];
         Node *b = &model->nodes[edge->b];
-        total_edge_length += distance(a->x, a->y, b->x, b->y);
+        length += distance(a->x, a->y, b->x, b->y);
     }
     // compute graph area
     Node *node = &model->nodes[0];
@@ -190,36 +190,37 @@ void analyze(Model *model, Attrib* attrib) {
     }
     float area = (maxx - minx) * (maxy - miny);
     // result
-    attrib->intersecting_nodes = intersecting_nodes;
-    attrib->nodes_on_edges = nodes_on_edges;
-    attrib->intersecting_edges = intersecting_edges;
-    attrib->out_of_rank_nodes = out_of_rank_nodes;
-    attrib->total_edge_length = total_edge_length;
+    attrib->node_node = node_node;
+    attrib->node_edge = node_edge;
+    attrib->edge_edge = edge_edge;
+    attrib->rank = rank;
+    attrib->length = length;
     attrib->area = area;
 }
 
 void print_attrib(Model *model) {
     Attrib attrib;
     analyze(model, &attrib);
-    printf("intersecting_nodes: %d\n", attrib.intersecting_nodes);
-    printf("nodes_on_edges: %d\n", attrib.nodes_on_edges);
-    printf("intersecting_edges: %d\n", attrib.intersecting_edges);
-    printf("out_of_rank_nodes: %d\n", attrib.out_of_rank_nodes);
-    printf("total_edge_length: %f\n", attrib.total_edge_length);
-    printf("area: %f\n", attrib.area);
+    printf("node_node: %g\n", attrib.node_node);
+    printf("node_edge: %g\n", attrib.node_edge);
+    printf("edge_edge: %g\n", attrib.edge_edge);
+    printf("rank: %g\n", attrib.rank);
+    printf("length: %g\n", attrib.length);
+    printf("area: %g\n", attrib.area);
     printf("\n");
 }
 
-float energy(Model *model) {
-    Attrib attrib;
-    analyze(model, &attrib);
+float energy(Model *model, Attrib *weights) {
+    Attrib _attrib;
+    Attrib *attrib = &_attrib;
+    analyze(model, attrib);
     float result = 0;
-    result += attrib.intersecting_nodes * 100;
-    result += attrib.nodes_on_edges * 100;
-    result += attrib.intersecting_edges * 10;
-    result += attrib.out_of_rank_nodes * 5;
-    result += attrib.total_edge_length * 1;
-    result += attrib.area * 0.1;
+    result += attrib->node_node * weights->node_node;
+    result += attrib->node_edge * weights->node_edge;
+    result += attrib->edge_edge * weights->edge_edge;
+    result += attrib->rank * weights->rank;
+    result += attrib->length * weights->length;
+    result += attrib->area * weights->area;
     return result;
 }
 
@@ -247,14 +248,14 @@ void copy(Model *dst, Model *src) {
 }
 
 float anneal(
-    Model *model, float max_temp, float min_temp,
+    Model *model, Attrib *weights, float max_temp, float min_temp,
     int steps, callback_func func)
 {
     Model best;
     Undo undo;
     srand(0);
     float factor = -log(max_temp / min_temp);
-    float current_energy = energy(model);
+    float current_energy = energy(model, weights);
     float previous_energy = current_energy;
     float best_energy = current_energy;
     copy(&best, model);
@@ -262,7 +263,7 @@ float anneal(
     for (int step = 0; step < steps; step++) {
         float temp = max_temp * exp(factor * step / steps);
         do_move(model, &undo);
-        current_energy = energy(model);
+        current_energy = energy(model, weights);
         float change = current_energy - previous_energy;
         if (change > 0 && exp(-change / temp) < rand_float()) {
             undo_move(model, &undo);

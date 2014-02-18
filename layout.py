@@ -26,13 +26,27 @@ class Model(Structure):
         ('nodes', Node * MAX_NODES),
     ]
 
+class Attrib(Structure):
+    _fields_ = [
+        ('node_node', c_float),
+        ('node_edge', c_float),
+        ('edge_edge', c_float),
+        ('rank', c_float),
+        ('length', c_float),
+        ('area', c_float),
+    ]
+
 CALLBACK_FUNC = CFUNCTYPE(None, POINTER(Model), c_float)
 
 dll.anneal.restype = c_float
-dll.anneal.argtypes = [POINTER(Model), c_float, c_float, c_int, CALLBACK_FUNC]
-def anneal(model, max_temp, min_temp, steps, callback_func):
+dll.anneal.argtypes = [
+    POINTER(Model), POINTER(Attrib),
+    c_float, c_float, c_int, CALLBACK_FUNC]
+
+def anneal(model, weights, max_temp, min_temp, steps, callback_func):
     return dll.anneal(
-        byref(model), max_temp, min_temp, steps, CALLBACK_FUNC(callback_func))
+        byref(model), byref(weights),
+        max_temp, min_temp, steps, CALLBACK_FUNC(callback_func))
 
 def cyclic(nodes, inputs):
     remaining = set(nodes)
@@ -94,8 +108,30 @@ def create_model(edges):
         model.edges[index].b = lookup[b]
     return model, lookup
 
+def create_weights(data):
+    keys = [
+        'node_node',
+        'node_edge',
+        'edge_edge',
+        'rank',
+        'length',
+        'area',
+    ]
+    result = Attrib()
+    for key in keys:
+        setattr(result, key, data.get(key, 0))
+    return result
+
 def layout(edges, steps=100000, listener=None):
     model, lookup = create_model(edges)
+    weights = create_weights({
+        'node_node': 100,
+        'node_edge': 100,
+        'edge_edge': 10,
+        'rank': 5,
+        'length': 1,
+        'area': 1,
+    })
     def create_result(model):
         nodes = {}
         for key, index in lookup.items():
@@ -106,5 +142,5 @@ def layout(edges, steps=100000, listener=None):
         if listener is not None:
             result = create_result(model.contents)
             listener(result, energy)
-    anneal(model, 100, 0.1, steps, callback_func)
+    anneal(model, weights, 100, 0.1, steps, callback_func)
     return create_result(model)
