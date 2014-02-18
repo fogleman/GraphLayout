@@ -1,13 +1,13 @@
 from math import atan2, cos, sin, pi
-import graph
+import layout
 import threading
 import wx
 
-BACKGROUND = (255, 255, 255)
-NODE_FILL = (255, 242, 193)
-NODE_COLOR = (7, 44, 54)
-EDGE_COLOR = (7, 44, 54)
-TEXT_COLOR = (7, 44, 54)
+BACKGROUND = '#FFFFFF'
+NODE_FILL = '#FFEBD3'
+NODE_COLOR = '#00283F'
+EDGE_COLOR = '#00283F'
+TEXT_COLOR = '#00283F'
 NODE_WIDTH = 2
 EDGE_WIDTH = 2
 
@@ -30,11 +30,11 @@ def render(model, size):
     font.SetFaceName('Helvetica')
     font.SetPointSize(int(scale / 8))
     dc.SetFont(font)
-    dc.SetTextForeground(wx.Colour(*TEXT_COLOR))
-    dc.SetBackground(wx.Brush(wx.Colour(*BACKGROUND)))
+    dc.SetTextForeground(TEXT_COLOR)
+    dc.SetBackground(wx.Brush(BACKGROUND))
     dc.Clear()
-    dc.SetBrush(wx.Brush(wx.Colour(*EDGE_COLOR)))
-    dc.SetPen(wx.Pen(wx.Colour(*EDGE_COLOR), EDGE_WIDTH))
+    dc.SetBrush(wx.Brush(EDGE_COLOR))
+    dc.SetPen(wx.Pen(EDGE_COLOR, EDGE_WIDTH))
     for a, b in model.edges:
         ax, ay = model.nodes[a]
         bx, by = model.nodes[b]
@@ -49,8 +49,8 @@ def render(model, size):
         points = [(bx, by), (cx1, cy1), (cx2, cy2), (bx, by)]
         points = [(sx(x), sy(y)) for x, y in points]
         dc.DrawPolygon(points)
-    dc.SetBrush(wx.Brush(wx.Colour(*NODE_FILL)))
-    dc.SetPen(wx.Pen(wx.Colour(*NODE_COLOR), NODE_WIDTH))
+    dc.SetBrush(wx.Brush(NODE_FILL))
+    dc.SetPen(wx.Pen(NODE_COLOR, NODE_WIDTH))
     for key, (x, y) in model.nodes.items():
         x, y = sx(x), sy(y)
         dc.DrawCircle(x, y, int(scale / 4))
@@ -86,7 +86,7 @@ class Panel(wx.Panel):
         self.update()
     def on_paint(self, event):
         dc = wx.AutoBufferedPaintDC(self)
-        dc.SetBackground(wx.Brush(wx.Colour(*BACKGROUND)))
+        dc.SetBackground(wx.Brush(BACKGROUND))
         dc.Clear()
         if self.bitmap is None:
             return
@@ -113,12 +113,10 @@ def main():
     frame.Center()
     frame.Show()
     def listener(state, energy):
-        state.energy(True) # prints debug output
-        print
         wx.CallAfter(panel.set_model, state)
     def run():
-        state = graph.layout(edges8, listener=listener)
-        wx.CallAfter(panel.set_model, state)
+        model = layout.layout(edges1, 100000, listener)
+        wx.CallAfter(panel.set_model, model)
     thread = threading.Thread(target=run)
     thread.start()
     app.MainLoop()

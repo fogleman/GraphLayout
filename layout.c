@@ -1,0 +1,197 @@
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_EDGES 128
+#define MAX_NODES 128
+
+#define INF 1e9
+#define EPS 1e-9
+
+typedef struct {
+    float x;
+    float y;
+} Node;
+
+typedef struct {
+    int a;
+    int b;
+} Edge;
+
+typedef struct {
+    int edge_count;
+    int node_count;
+    Edge edges[MAX_EDGES];
+    Node nodes[MAX_NODES];
+} Model;
+
+typedef struct {
+    int index;
+    float x;
+    float y;
+} Undo;
+
+typedef void (*callback_func)(Model *, float);
+
+int rand_int(int n) {
+    int result;
+    while (n <= (result = rand() / (RAND_MAX / n)));
+    return result;
+}
+
+float rand_float() {
+    return (float)rand() / (float)RAND_MAX;
+}
+
+int point_on_segment(
+    float x0, float y0, float x1, float y1,
+    float x2, float y2)
+{
+    float xt = INF;
+    float yt = INF;
+    if (x0 != x1) {
+        xt = (x2 - x0) / (x1 - x0);
+    }
+    else if (x2 != x0) {
+        return 0;
+    }
+    if (y0 != y1) {
+        yt = (y2 - y0) / (y1 - y0);
+    }
+    else if (y2 != y0) {
+        return 0;
+    }
+    float t = INF;
+    if (xt == INF) {
+        t = yt;
+    }
+    else if (yt == INF) {
+        t = xt;
+    }
+    else if (abs(xt - yt) < EPS) {
+        t = xt;
+    }
+    else {
+        return 0;
+    }
+    return t > 0 && t < 1;
+}
+
+int segments_intersect(
+    float x0, float y0, float x1, float y1,
+    float x2, float y2, float x3, float y3)
+{
+    float p1 = x1 - x0;
+    float q1 = y1 - y0;
+    float p2 = x3 - x2;
+    float q2 = y3 - y2;
+    float det = p1 * q2 - p2 * q1;
+    if (det == 0) {
+        return 0;
+    }
+    float s = (p1 * (y0 - y2) - q1 * (x0 - x2)) / det;
+    float t = (p2 * (y0 - y2) - q2 * (x0 - x2)) / det;
+    return s > 0 && s < 1 && t > 0 && t < 1;
+}
+
+float energy(Model *model) {
+    // count intersecting nodes
+    int intersecting_nodes = 0;
+    for (int i = 0; i < model->node_count; i++) {
+        for (int j = i + 1; j < model->node_count; j++) {
+            Node *a = &model->nodes[i];
+            Node *b = &model->nodes[j];
+            if (hypot(a->x - b->x, a->y - b->y) < 1) {
+                intersecting_nodes++;
+            }
+        }
+    }
+    // count nodes on edges
+    int nodes_on_edges = 0;
+    for (int i = 0; i < model->edge_count; i++) {
+        Edge *edge = &model->edges[i];
+        Node *a = &model->nodes[edge->a];
+        Node *b = &model->nodes[edge->b];
+        for (int j = 0; j < model->node_count; j++) {
+            Node *c = &model->nodes[j];
+            if (point_on_segment(a->x, a->y, b->x, b->y, c->x, c->y)) {
+                nodes_on_edges++;
+            }
+        }
+    }
+    // TODO: count intersecting edges
+    // sum edge lengths
+    float total_edge_length = 0;
+    for (int i = 0; i < model->edge_count; i++) {
+        Edge *edge = &model->edges[i];
+        Node *a = &model->nodes[edge->a];
+        Node *b = &model->nodes[edge->b];
+        total_edge_length += hypot(a->x - b->x, a->y - b->y);
+        // TODO: count orthogonal edges
+    }
+    // compute score
+    float result = 0;
+    result += intersecting_nodes * 100;
+    result += nodes_on_edges * 100;
+    result += total_edge_length;
+    return result;
+}
+
+void do_move(Model *model, Undo *undo) {
+    int index = rand_int(model->node_count);
+    Node *node = &model->nodes[index];
+    undo->index = index;
+    undo->x = node->x;
+    undo->y = node->y;
+    node->x = rand_int(6);
+    node->y = rand_int(6);
+}
+
+void undo_move(Model *model, Undo *undo) {
+    Node *node = &model->nodes[undo->index];
+    node->x = undo->x;
+    node->y = undo->y;
+}
+
+void copy(Model *dst, Model *src) {
+    dst->edge_count = src->edge_count;
+    dst->node_count = src->node_count;
+    memcpy(dst->edges, src->edges, sizeof(Edge) * src->edge_count);
+    memcpy(dst->nodes, src->nodes, sizeof(Node) * src->node_count);
+}
+
+float anneal(
+    Model *model, float max_temp, float min_temp,
+    int steps, callback_func func)
+{
+    Model best = {0};
+    Undo undo = {0};
+    float factor = -log(max_temp / min_temp);
+    float current_energy = energy(model);
+    float previous_energy = current_energy;
+    float best_energy = current_energy;
+    copy(&best, model);
+    func(&best, best_energy);
+    for (int step = 0; step < steps; step++) {
+        float temp = max_temp * exp(factor * step / steps);
+        do_move(model, &undo);
+        current_energy = energy(model);
+        float change = current_energy - previous_energy;
+        if (change > 0 && exp(-change / temp) < rand_float()) {
+            undo_move(model, &undo);
+        }
+        else {
+            previous_energy = current_energy;
+            if (current_energy < best_energy) {
+                best_energy = current_energy;
+                copy(&best, model);
+                func(&best, best_energy);
+                if (current_energy <= 0) {
+                    break;
+                }
+            }
+        }
+    }
+    copy(model, &best);
+    return best_energy;
+}
