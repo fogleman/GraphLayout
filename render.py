@@ -1,3 +1,5 @@
+from __future__ import division
+
 from math import atan2, cos, sin, pi
 import wx
 
@@ -17,17 +19,17 @@ def render(max_width, max_height, edges, nodes):
     y1 = min(y for x, y in positions) - padding
     x2 = max(x for x, y in positions) + padding
     y2 = max(y for x, y in positions) + padding
-    scale = min(float(max_width) / (x2 - x1), float(max_height) / (y2 - y1))
+    scale = min(max_width / (x2 - x1), max_height / (y2 - y1))
     def sx(x):
-        return int(round((x - x1) * scale))
+        return (x - x1) * scale
     def sy(y):
-        return int(round((y - y1) * scale))
+        return (y - y1) * scale
     width, height = sx(x2), sy(y2)
     bitmap = wx.EmptyBitmap(width, height)
     dc = wx.MemoryDC(bitmap)
     font = dc.GetFont()
     font.SetFaceName(FONT)
-    font.SetPointSize(int(scale / 8))
+    font.SetPointSize(scale / 8)
     dc.SetFont(font)
     dc.SetTextForeground(TEXT_COLOR)
     dc.SetBackground(wx.Brush(BACKGROUND))
@@ -52,7 +54,7 @@ def render(max_width, max_height, edges, nodes):
     dc.SetPen(wx.Pen(NODE_COLOR, NODE_WIDTH))
     for key, (x, y) in nodes.items():
         x, y = sx(x), sy(y)
-        dc.DrawCircle(x, y, int(scale / 4))
+        dc.DrawCircle(x, y, scale / 4)
         text = str(key)
         tw, th = dc.GetTextExtent(text)
         dc.DrawText(text, x - tw / 2, y - th / 2)
