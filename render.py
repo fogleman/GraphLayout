@@ -1,6 +1,7 @@
 from math import atan2, cos, sin, pi
 import wx
 
+FONT = 'Helvetica'
 BACKGROUND = '#FFFFFF'
 NODE_FILL = '#FFEBD3'
 NODE_COLOR = '#00283F'
@@ -25,7 +26,7 @@ def render(size, edges, nodes):
     bitmap = wx.EmptyBitmap(width, height)
     dc = wx.MemoryDC(bitmap)
     font = dc.GetFont()
-    font.SetFaceName('Helvetica')
+    font.SetFaceName(FONT)
     font.SetPointSize(int(scale / 8))
     dc.SetFont(font)
     dc.SetTextForeground(TEXT_COLOR)

@@ -101,9 +101,12 @@ float energy(Model *model) {
         for (int j = i + 1; j < model->node_count; j++) {
             Node *a = &model->nodes[i];
             Node *b = &model->nodes[j];
-            if (hypot(a->x - b->x, a->y - b->y) < 1) {
+            if (a->x == b->x && a->y == b->y) {
                 intersecting_nodes++;
             }
+            // if (hypot(a->x - b->x, a->y - b->y) < 1) {
+            //     intersecting_nodes++;
+            // }
         }
     }
     // count nodes on edges
@@ -119,7 +122,22 @@ float energy(Model *model) {
             }
         }
     }
-    // TODO: count intersecting edges
+    int intersecting_edges = 0;
+    for (int i = 0; i < model->edge_count; i++) {
+        for (int j = i + 1; j < model->edge_count; j++) {
+            Edge *p = &model->edges[i];
+            Edge *q = &model->edges[j];
+            Node *a = &model->nodes[p->a];
+            Node *b = &model->nodes[p->b];
+            Node *c = &model->nodes[q->a];
+            Node *d = &model->nodes[q->b];
+            if (segments_intersect(
+                a->x, a->y, b->x, b->y, c->x, c->y, d->x, d->y))
+            {
+                intersecting_edges++;
+            }
+        }
+    }
     // sum edge lengths
     float total_edge_length = 0;
     for (int i = 0; i < model->edge_count; i++) {
@@ -133,6 +151,7 @@ float energy(Model *model) {
     float result = 0;
     result += intersecting_nodes * 100;
     result += nodes_on_edges * 100;
+    result += intersecting_edges * 10;
     result += total_edge_length;
     return result;
 }
@@ -164,8 +183,8 @@ float anneal(
     Model *model, float max_temp, float min_temp,
     int steps, callback_func func)
 {
-    Model best = {0};
-    Undo undo = {0};
+    Model best;
+    Undo undo;
     float factor = -log(max_temp / min_temp);
     float current_energy = energy(model);
     float previous_energy = current_energy;
