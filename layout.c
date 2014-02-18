@@ -8,6 +8,9 @@
 #define INF 1e9
 #define EPS 1e-9
 
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
 typedef struct {
     float x;
     float y;
@@ -147,12 +150,27 @@ float energy(Model *model) {
         Node *b = &model->nodes[edge->b];
         total_edge_length += hypot(a->x - b->x, a->y - b->y);
     }
+    // compute graph area
+    Node *node = &model->nodes[0];
+    float minx = node->x;
+    float miny = node->y;
+    float maxx = node->x;
+    float maxy = node->y;
+    for (int i = 1; i < model->node_count; i++) {
+        Node *node = &model->nodes[i];
+        minx = MIN(minx, node->x);
+        miny = MIN(miny, node->y);
+        maxx = MAX(maxx, node->x);
+        maxy = MAX(maxy, node->y);
+    }
+    float area = (maxx - minx) * (maxy - miny);
     // compute score
     float result = 0;
     result += intersecting_nodes * 100;
     result += nodes_on_edges * 100;
     result += intersecting_edges * 10;
     result += total_edge_length;
+    result += area * 0.1;
     return result;
 }
 
