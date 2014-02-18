@@ -222,6 +222,7 @@ float anneal(
 {
     Model best;
     Undo undo;
+    srand(0);
     float factor = -log(max_temp / min_temp);
     float current_energy = energy(model);
     float previous_energy = current_energy;
