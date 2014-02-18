@@ -4,19 +4,13 @@ Graph drawing using simulated annealing for layout.
 
 ### Input
 
+    path = 'output.png'
+    size = 800
     edges = [
-        (5, 11),
-        (11, 10),
-        (11, 2),
-        (3, 10),
-        (3, 8),
-        (8, 9),
-        (11, 9),
-        (7, 8),
-        (7, 11),
+        (1, 2), (1, 3), (1, 4), (2, 4), (2, 5), (3, 6),
+        (4, 3), (4, 6), (4, 7), (5, 4), (5, 7), (7, 6),
     ]
-    model = graph.layout(edges)
-    bitmap = render(model, 800)
+    create_bitmap(path, size, edges)
 
 ### Output
 
