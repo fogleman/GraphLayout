@@ -57,38 +57,33 @@ float rand_float() {
     return (float)rand() / (float)RAND_MAX;
 }
 
-int point_on_segment(
-    float x0, float y0, float x1, float y1,
-    float x2, float y2)
+float distance(float x0, float y0, float x1, float y1) {
+    return hypot(x1 - x0, y1 - y0);
+}
+
+float dot(float x0, float y0, float x1, float y1, float x2, float y2) {
+    return (x1 - x0) * (x2 - x1) + (y1 - y0) * (y2 - y1);
+}
+
+float cross(float x0, float y0, float x1, float y1, float x2, float y2) {
+    return (x1 - x0) * (y2 - y0) - (y1 - y0) * (x2 - x0);
+}
+
+float segment_point_distance(
+    float x0, float y0, float x1, float y1, float x2, float y2)
 {
-    float xt = INF;
-    float yt = INF;
-    if (x0 != x1) {
-        xt = (x2 - x0) / (x1 - x0);
+    if (x0 == x1 && y0 == y1) {
+        return distance(x0, y0, x2, y2);
     }
-    else if (x2 != x0) {
-        return 0;
+    float d1 = dot(x0, y0, x1, y1, x2, y2);
+    if (d1 > 0) {
+        return distance(x1, y1, x2, y2);
     }
-    if (y0 != y1) {
-        yt = (y2 - y0) / (y1 - y0);
+    float d2 = dot(x1, y1, x0, y0, x2, y2);
+    if (d2 > 0) {
+        return distance(x0, y0, x2, y2);
     }
-    else if (y2 != y0) {
-        return 0;
-    }
-    float t = INF;
-    if (xt == INF) {
-        t = yt;
-    }
-    else if (yt == INF) {
-        t = xt;
-    }
-    else if (abs(xt - yt) < EPS) {
-        t = xt;
-    }
-    else {
-        return 0;
-    }
-    return t > 0 && t < 1;
+    return fabs(cross(x0, y0, x1, y1, x2, y2) / distance(x0, y0, x1, y1));
 }
 
 int segments_intersect(
@@ -115,12 +110,9 @@ void analyze(Model *model, Attrib* attrib) {
         for (int j = i + 1; j < model->node_count; j++) {
             Node *a = &model->nodes[i];
             Node *b = &model->nodes[j];
-            if (a->x == b->x && a->y == b->y) {
+            if (distance(a->x, a->y, b->x, b->y) < 1) {
                 intersecting_nodes++;
             }
-            // if (hypot(a->x - b->x, a->y - b->y) < 1) {
-            //     intersecting_nodes++;
-            // }
         }
     }
     // check node ranks
@@ -148,7 +140,12 @@ void analyze(Model *model, Attrib* attrib) {
         Node *b = &model->nodes[edge->b];
         for (int j = 0; j < model->node_count; j++) {
             Node *c = &model->nodes[j];
-            if (point_on_segment(a->x, a->y, b->x, b->y, c->x, c->y)) {
+            if (c == a || c == b) {
+                continue;
+            }
+            if (segment_point_distance(
+                a->x, a->y, b->x, b->y, c->x, c->y) < 0.25)
+            {
                 nodes_on_edges++;
             }
         }
@@ -176,7 +173,7 @@ void analyze(Model *model, Attrib* attrib) {
         Edge *edge = &model->edges[i];
         Node *a = &model->nodes[edge->a];
         Node *b = &model->nodes[edge->b];
-        total_edge_length += hypot(a->x - b->x, a->y - b->y);
+        total_edge_length += distance(a->x, a->y, b->x, b->y);
     }
     // compute graph area
     Node *node = &model->nodes[0];
@@ -220,8 +217,8 @@ float energy(Model *model) {
     result += attrib.intersecting_nodes * 100;
     result += attrib.nodes_on_edges * 100;
     result += attrib.intersecting_edges * 10;
-    result += attrib.out_of_rank_nodes * 10;
-    result += attrib.total_edge_length;
+    result += attrib.out_of_rank_nodes * 5;
+    result += attrib.total_edge_length * 1;
     result += attrib.area * 0.1;
     return result;
 }
@@ -232,8 +229,8 @@ void do_move(Model *model, Undo *undo) {
     undo->index = index;
     undo->x = node->x;
     undo->y = node->y;
-    node->x = rand_int(6);
-    node->y = rand_int(6);
+    node->x = rand_int(12) / 2.0;
+    node->y = rand_int(12) / 2.0;
 }
 
 void undo_move(Model *model, Undo *undo) {
