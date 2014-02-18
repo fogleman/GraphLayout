@@ -122,6 +122,7 @@ float energy(Model *model) {
             }
         }
     }
+    // count intersecting edges
     int intersecting_edges = 0;
     for (int i = 0; i < model->edge_count; i++) {
         for (int j = i + 1; j < model->edge_count; j++) {
@@ -145,7 +146,6 @@ float energy(Model *model) {
         Node *a = &model->nodes[edge->a];
         Node *b = &model->nodes[edge->b];
         total_edge_length += hypot(a->x - b->x, a->y - b->y);
-        // TODO: count orthogonal edges
     }
     // compute score
     float result = 0;
