@@ -51,22 +51,17 @@ def create_model(edges):
         model.edges[index].b = lookup[b]
     return model, lookup
 
-class Graph(object):
-    def __init__(self, edges, nodes):
-        self.edges = edges
-        self.nodes = nodes
-
 def layout(edges, steps=100000, listener=None):
     model, lookup = create_model(edges)
-    def create_graph(model):
+    def create_result(model):
         nodes = {}
         for key, index in lookup.items():
             node = model.nodes[index]
             nodes[key] = (node.x, node.y)
-        return Graph(edges, nodes)
+        return nodes
     def callback_func(model, energy):
         if listener is not None:
-            graph = create_graph(model.contents)
+            graph = create_result(model.contents)
             listener(graph, energy)
     anneal(model, 100, 0.1, steps, callback_func)
-    return create_graph(model)
+    return create_result(model)
