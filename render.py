@@ -10,14 +10,14 @@ TEXT_COLOR = '#00283F'
 NODE_WIDTH = 2
 EDGE_WIDTH = 2
 
-def render(size, edges, nodes):
+def render(max_width, max_height, edges, nodes):
     padding = 0.5
     positions = nodes.values()
     x1 = min(x for x, y in positions) - padding
     y1 = min(y for x, y in positions) - padding
     x2 = max(x for x, y in positions) + padding
     y2 = max(y for x, y in positions) + padding
-    scale = min(float(size) / (x2 - x1), float(size) / (y2 - y1))
+    scale = min(float(max_width) / (x2 - x1), float(max_height) / (y2 - y1))
     def sx(x):
         return int(round((x - x1) * scale))
     def sy(y):

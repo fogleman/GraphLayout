@@ -14,8 +14,7 @@ class Panel(wx.Panel):
         if self.model is None:
             return
         cw, ch = self.GetClientSize()
-        size = min(cw, ch)
-        bitmap = render.render(size, *self.model)
+        bitmap = render.render(cw, ch, *self.model)
         self.set_bitmap(bitmap)
     def set_model(self, model):
         self.model = model
