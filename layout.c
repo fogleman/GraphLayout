@@ -35,6 +35,15 @@ typedef struct {
     float y;
 } Undo;
 
+typedef struct {
+    int intersecting_nodes;
+    int nodes_on_edges;
+    int intersecting_edges;
+    int out_of_rank_nodes;
+    float total_edge_length;
+    float area;
+} Attrib;
+
 typedef void (*callback_func)(Model *, float);
 
 int rand_int(int n) {
@@ -98,7 +107,7 @@ int segments_intersect(
     return s > 0 && s < 1 && t > 0 && t < 1;
 }
 
-float energy(Model *model) {
+void analyze(Model *model, Attrib* attrib) {
     // count intersecting nodes
     int intersecting_nodes = 0;
     for (int i = 0; i < model->node_count; i++) {
@@ -182,14 +191,25 @@ float energy(Model *model) {
         maxy = MAX(maxy, node->y);
     }
     float area = (maxx - minx) * (maxy - miny);
-    // compute score
+    // result
+    attrib->intersecting_nodes = intersecting_nodes;
+    attrib->nodes_on_edges = nodes_on_edges;
+    attrib->intersecting_edges = intersecting_edges;
+    attrib->out_of_rank_nodes = out_of_rank_nodes;
+    attrib->total_edge_length = total_edge_length;
+    attrib->area = area;
+}
+
+float energy(Model *model) {
+    Attrib attrib;
+    analyze(model, &attrib);
     float result = 0;
-    result += intersecting_nodes * 100;
-    result += nodes_on_edges * 100;
-    result += intersecting_edges * 10;
-    result += out_of_rank_nodes * 10;
-    result += total_edge_length;
-    result += area * 0.1;
+    result += attrib.intersecting_nodes * 100;
+    result += attrib.nodes_on_edges * 100;
+    result += attrib.intersecting_edges * 10;
+    result += attrib.out_of_rank_nodes * 10;
+    result += attrib.total_edge_length;
+    result += attrib.area * 0.1;
     return result;
 }
 
