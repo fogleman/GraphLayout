@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -200,6 +201,18 @@ void analyze(Model *model, Attrib* attrib) {
     attrib->area = area;
 }
 
+void print_attrib(Model *model) {
+    Attrib attrib;
+    analyze(model, &attrib);
+    printf("intersecting_nodes: %d\n", attrib.intersecting_nodes);
+    printf("nodes_on_edges: %d\n", attrib.nodes_on_edges);
+    printf("intersecting_edges: %d\n", attrib.intersecting_edges);
+    printf("out_of_rank_nodes: %d\n", attrib.out_of_rank_nodes);
+    printf("total_edge_length: %f\n", attrib.total_edge_length);
+    printf("area: %f\n", attrib.area);
+    printf("\n");
+}
+
 float energy(Model *model) {
     Attrib attrib;
     analyze(model, &attrib);
@@ -270,5 +283,6 @@ float anneal(
         }
     }
     copy(model, &best);
+    print_attrib(model);
     return best_energy;
 }
