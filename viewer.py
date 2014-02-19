@@ -100,8 +100,9 @@ class Frame(wx.Frame):
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.sliders = []
         for name in names:
+            value = int(layout.WEIGHTS[name] * 10)
             text = wx.StaticText(parent, -1, name)
-            slider = wx.Slider(parent, -1, 0, 0, 100)
+            slider = wx.Slider(parent, -1, value, 0, 100)
             slider.name = name
             slider.Bind(wx.EVT_SCROLL_THUMBRELEASE, self.on_slider)
             self.sliders.append(slider)

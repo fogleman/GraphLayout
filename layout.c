@@ -230,8 +230,10 @@ void do_move(Model *model, Undo *undo) {
     undo->index = index;
     undo->x = node->x;
     undo->y = node->y;
-    node->x = rand_int(12) / 2.0;
-    node->y = rand_int(12) / 2.0;
+    node->x = rand_int(10) / 2.0;
+    node->y = rand_int(10) / 2.0;
+    // node->x += (rand_int(3) - 1) / 2.0;
+    // node->y += (rand_int(3) - 1) / 2.0;
 }
 
 void undo_move(Model *model, Undo *undo) {
