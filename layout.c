@@ -232,8 +232,13 @@ void do_move(Model *model, Undo *undo) {
     undo->y = node->y;
     node->x = rand_int(10) / 2.0;
     node->y = rand_int(10) / 2.0;
-    // node->x += (rand_int(3) - 1) / 2.0;
-    // node->y += (rand_int(3) - 1) / 2.0;
+    // float dx, dy;
+    // do {
+    //     dx = (rand_int(3) - 1) / 2.0;
+    //     dy = (rand_int(3) - 1) / 2.0;
+    // } while (dx == 0 && dy == 0);
+    // node->x += dx;
+    // node->y += dy;
 }
 
 void undo_move(Model *model, Undo *undo) {
@@ -249,6 +254,31 @@ void copy(Model *dst, Model *src) {
     memcpy(dst->nodes, src->nodes, sizeof(Node) * src->node_count);
 }
 
+void randomize(Model *model) {
+    int size = ceilf(sqrtf(model->node_count));
+    for (int i = 0; i < model->node_count; i++) {
+        Node *node = &model->nodes[i];
+        node->x = rand_int(size);
+        node->y = rand_int(size);
+    }
+}
+
+void random_start(Model *model, Attrib *weights, int steps) {
+    Model best;
+    float current_energy = energy(model, weights);
+    float best_energy = current_energy;
+    copy(&best, model);
+    for (int step = 0; step < steps; step++) {
+        randomize(model);
+        current_energy = energy(model, weights);
+        if (current_energy < best_energy) {
+            best_energy = current_energy;
+            copy(&best, model);
+        }
+    }
+    copy(model, &best);
+}
+
 float anneal(
     Model *model, Attrib *weights, float max_temp, float min_temp,
     int steps, callback_func func)
@@ -256,6 +286,7 @@ float anneal(
     Model best;
     Undo undo;
     srand(0);
+    random_start(model, weights, 1000);
     float factor = -log(max_temp / min_temp);
     float current_energy = energy(model, weights);
     float previous_energy = current_energy;
