@@ -144,5 +144,5 @@ def layout(edges, weights=None, steps=100000, listener=None):
         if listener is not None:
             result = create_result(model.contents)
             listener(result, energy)
-    anneal(model, weights, 100, 0.1, steps, callback_func)
+    anneal(model, weights, 100, 0.01, steps, callback_func)
     return create_result(model)
